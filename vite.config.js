@@ -8,4 +8,10 @@ export default {
     port: 5173,
     allowedHosts: "all"
   },
+   build: {
+    rollupOptions: {
+      preserveEntrySignatures: 'allow-extension',
+    },
+  }
 };
+
