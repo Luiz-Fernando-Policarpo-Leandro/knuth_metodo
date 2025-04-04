@@ -101,6 +101,60 @@ class LinkedList {
     this.head = null;
     this.size = 0;
   }
+
+  // Algoritmo KMP (Knuth-Morris-Pratt) para buscar um padrão em uma lista
+  kmpSearch(pattern) {
+    if (!this.head || pattern.length === 0) return -1;
+
+    const patternArray = pattern.split("").map(Number); // Converte o padrão para array de números
+    const prefixTable = this.computePrefixTable(patternArray);
+    let i = 0; // Índice para a lista
+    let j = 0; // Índice para o padrão
+    let current = this.head;
+
+    while (current) {
+      if (current.value === patternArray[j]) {
+        i++;
+        j++;
+      }
+
+      if (j === patternArray.length) {
+        return i - j; // Padrão encontrado na posição i - j
+      } else if (current.value !== patternArray[j]) {
+        if (j !== 0) {
+          j = prefixTable[j - 1];
+        } else {
+          i++;
+        }
+      }
+      current = current.next;
+    }
+
+    return -1; // Padrão não encontrado
+  }
+
+  // Calcula a tabela de prefixos para o algoritmo KMP
+  computePrefixTable(pattern) {
+    const prefixTable = Array(pattern.length).fill(0);
+    let length = 0; // Comprimento do prefixo anterior mais longo
+    let i = 1;
+
+    while (i < pattern.length) {
+      if (pattern[i] === pattern[length]) {
+        length++;
+        prefixTable[i] = length;
+        i++;
+      } else {
+        if (length !== 0) {
+          length = prefixTable[length - 1];
+        } else {
+          prefixTable[i] = 0;
+          i++;
+        }
+      }
+    }
+    return prefixTable;
+  }
 }
 
 const LinkedListVisualizer = () => {
@@ -110,6 +164,7 @@ const LinkedListVisualizer = () => {
   const [searchResult, setSearchResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [headDetails, setHeadDetails] = useState({ head: null, next: null, prev: null });
+  const [patternInput, setPatternInput] = useState(""); // Input para o padrão KMP
 
   const updateList = () => {
     setValues(list.toArray());
@@ -154,6 +209,12 @@ const LinkedListVisualizer = () => {
     setErrorMessage("");
   };
 
+  const kmpSearchList = () => {
+    if (!patternInput.trim()) return;
+    const position = list.kmpSearch(patternInput);
+    setSearchResult(position >= 0 ? `Padrão encontrado na posição: ${position}` : "Padrão não encontrado");
+  };
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h2>Lista Encadeada</h2>
@@ -171,6 +232,16 @@ const LinkedListVisualizer = () => {
         <button onClick={() => searchValue(true, false)}>📌 MTF</button>
         <button onClick={() => searchValue(false, true)}>🔄 Transposição</button>
         <button onClick={resetList} style={{ backgroundColor: "gray", color: "white" }}>⛔ Resetar</button>
+      </div>
+
+      <div style={{ marginBottom: "10px" }}>
+        <input
+          type="text"
+          value={patternInput}
+          onChange={(e) => setPatternInput(e.target.value)}
+          placeholder="Digite o padrão KMP (números separados por vírgula)"
+        />
+        <button onClick={kmpSearchList}>KMP Buscar Padrão</button>
       </div>
 
       {errorMessage && <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>}

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+// Nó da Skip List
 class SkipListNode {
   constructor(value, level) {
     this.value = value;
@@ -7,6 +8,7 @@ class SkipListNode {
   }
 }
 
+// Skip List
 class SkipList {
   constructor(maxLevel = 4) {
     this.maxLevel = maxLevel;
@@ -14,6 +16,7 @@ class SkipList {
     this.level = 0;
   }
 
+  // Gera um nível aleatório para o novo nó
   randomLevel() {
     let lvl = 1;
     while (Math.random() < 0.33 && lvl < this.maxLevel) {
@@ -22,10 +25,12 @@ class SkipList {
     return lvl;
   }
 
+  // Insere um valor na Skip List
   insert(value) {
     let update = new Array(this.maxLevel).fill(this.head);
     let current = this.head;
 
+    // Percorre os níveis da Skip List para encontrar a posição de inserção
     for (let i = this.level - 1; i >= 0; i--) {
       while (current.next[i] && current.next[i].value < value) {
         current = current.next[i];
@@ -33,6 +38,7 @@ class SkipList {
       update[i] = current;
     }
 
+    // Gera um nível aleatório para o novo nó
     let newLevel = this.randomLevel();
     if (newLevel > this.level) {
       for (let i = this.level; i < newLevel; i++) {
@@ -41,6 +47,7 @@ class SkipList {
       this.level = newLevel;
     }
 
+    // Cria o novo nó e ajusta os ponteiros
     let newNode = new SkipListNode(value, newLevel);
     for (let i = 0; i < newLevel; i++) {
       newNode.next[i] = update[i].next[i];
@@ -48,10 +55,12 @@ class SkipList {
     }
   }
 
+  // Remove um valor da Skip List
   remove(value) {
     let update = new Array(this.maxLevel).fill(null);
     let current = this.head;
 
+    // Percorre os níveis da Skip List para encontrar o nó a ser removido
     for (let i = this.level - 1; i >= 0; i--) {
       while (current.next[i] && current.next[i].value < value) {
         current = current.next[i];
@@ -59,6 +68,7 @@ class SkipList {
       update[i] = current;
     }
 
+    // Se o nó for encontrado, ajusta os ponteiros para removê-lo
     if (current.next[0] && current.next[0].value === value) {
       for (let i = 0; i < this.maxLevel; i++) {
         if (update[i].next[i] !== current.next[0]) break;
@@ -67,8 +77,10 @@ class SkipList {
     }
   }
 
+  // Busca um valor na Skip List
   search(value) {
     let current = this.head;
+    // Percorre os níveis da Skip List para encontrar o valor
     for (let i = this.level - 1; i >= 0; i--) {
       while (current.next[i] && current.next[i].value < value) {
         current = current.next[i];
@@ -77,6 +89,7 @@ class SkipList {
     return current.next[0] && current.next[0].value === value;
   }
 
+  // Converte a Skip List em um array para visualização
   toArray() {
     let result = [];
     let current = this.head.next[0];
@@ -87,6 +100,7 @@ class SkipList {
     return result;
   }
 
+  // Limpa a Skip List
   clear() {
     this.head = new SkipListNode(null, this.maxLevel);
     this.level = 0;
@@ -99,6 +113,7 @@ const SkipListVisualizer = () => {
   const [searchResult, setSearchResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
+  // Atualiza a Skip List com base na operação (inserir, remover, buscar)
   const updateList = (operation) => {
     if (!inputValue.trim()) return;
 
@@ -124,6 +139,7 @@ const SkipListVisualizer = () => {
     setInputValue("");
   };
 
+  // Reseta a Skip List
   const resetList = () => {
     skipList.clear();
     setSkipList(new SkipList());
@@ -142,8 +158,8 @@ const SkipListVisualizer = () => {
       />
       <button onClick={() => updateList("insert")}>Adicionar</button>
       <button onClick={() => updateList("remove")} style={{ backgroundColor: "red", color: "white" }}>Remover</button>
-      <button onClick={() => updateList("search")}> Buscar</button>
-      <button onClick={resetList} style={{ backgroundColor: "gray", color: "white" }}>⛔ Resetar</button>
+      <button onClick={() => updateList("search")}>Buscar</button>
+      <button onClick={resetList} style={{ backgroundColor: "gray", color: "white" }}>Resetar</button>
 
       {searchResult && <p style={{ fontWeight: "bold" }}>{searchResult}</p>}
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}

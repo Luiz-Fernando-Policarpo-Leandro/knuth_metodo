@@ -7,32 +7,46 @@ import LinkedVisualizer from "./LinkedListVisualizer";
 import SkipListVisualizer from "./SkipListVisualizer";
 
 const KnuthVisualizer = () => {
+  // Estado para armazenar os valores aleatórios usados na visualização
   const [randomValues, setRandomValues] = useState(generateRandomValues(7));
+  // Estado para armazenar o algoritmo de árvore selecionado (bst, avl, b-tree, fib-tree)
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("bst");
+  // Estado para armazenar os resultados do benchmark
   const [benchmarkResults, setBenchmarkResults] = useState(null);
+  // Estado para indicar se o benchmark está em execução
   const [isBenchmarking, setIsBenchmarking] = useState(false);
+  // Estado para armazenar mensagens de erro
   const [error, setError] = useState(null);
+  // Referência para o campo de entrada de valores
   const inputRef = useRef();
+  // Referência para o elemento SVG onde a árvore será desenhada
   const svgRef = useRef();
+  // Referência para o campo de entrada do número de vértices
   const numVerticesRef = useRef();
+  // Estado para armazenar o número de vértices a serem gerados
   const [numVertices, setNumVertices] = useState(7);
+  // Estado para armazenar mensagens de feedback ao usuário
   const [feedback, setFeedback] = useState(null);
+  // Estado para controlar a velocidade da animação
   const [animationSpeed, setAnimationSpeed] = useState(1);
 
+  // Gera os dados da árvore com base no algoritmo selecionado e nos valores aleatórios
   const treeData = useMemo(() => generateTreeData(selectedAlgorithm, randomValues), [selectedAlgorithm, randomValues]);
 
+  // Efeito para desenhar a árvore no SVG sempre que os dados da árvore ou a velocidade da animação mudam
   useEffect(() => {
     if (!treeData.tree) return;
 
     const width = 800, height = 600, marginTop = 100;
-    d3.select(svgRef.current).selectAll("*").remove();
+    d3.select(svgRef.current).selectAll("*").remove(); // Limpa o SVG
 
     const svg = d3.select(svgRef.current).attr("width", width).attr("height", height);
-    const g = svg.append("g").attr("transform", `translate(${width / 2}, ${marginTop})`);
+    const g = svg.append("g").attr("transform", `translate(${width / 2}, ${marginTop})`); // Cria um grupo para a árvore
 
-    const zoom = d3.zoom().scaleExtent([0.5, 2]).on("zoom", (event) => g.attr("transform", event.transform));
+    const zoom = d3.zoom().scaleExtent([0.5, 2]).on("zoom", (event) => g.attr("transform", event.transform)); // Configura o zoom
     svg.call(zoom);
 
+    // Função para limpar os dados da árvore para visualização
     const cleanTree = (node) => {
       if (!node) return null;
       return {
@@ -41,12 +55,13 @@ const KnuthVisualizer = () => {
       };
     };
 
-    const root = d3.hierarchy(cleanTree(treeData.tree));
-    const treeLayout = d3.tree().size([width - 200, height - 250]);
-    treeLayout(root);
+    const root = d3.hierarchy(cleanTree(treeData.tree)); // Cria a hierarquia de dados para o D3
+    const treeLayout = d3.tree().size([width - 200, height - 250]); // Configura o layout da árvore
+    treeLayout(root); // Aplica o layout aos dados
 
-    const linkGenerator = d3.linkVertical().x((d) => d.x - width / 2).y((d) => d.y);
+    const linkGenerator = d3.linkVertical().x((d) => d.x - width / 2).y((d) => d.y); // Configura o gerador de links
 
+    // Desenha os links entre os nós
     g.selectAll(".link")
       .data(root.links())
       .join("path")
@@ -61,6 +76,7 @@ const KnuthVisualizer = () => {
       .ease(d3.easeCubicInOut)
       .style("opacity", 1);
 
+    // Desenha os nós da árvore
     g.selectAll(".node")
       .data(root.descendants())
       .join("circle")
@@ -74,6 +90,7 @@ const KnuthVisualizer = () => {
       .duration(800 * animationSpeed)
       .attr("r", 20);
 
+    // Adiciona rótulos aos nós
     g.selectAll(".label")
       .data(root.descendants())
       .join("text")
@@ -86,6 +103,7 @@ const KnuthVisualizer = () => {
       .text((d) => d.data.value);
   }, [treeData, animationSpeed]);
 
+  // Executa o benchmark das estruturas de dados
   const runBenchmark = () => {
     setIsBenchmarking(true);
     try {
@@ -99,6 +117,7 @@ const KnuthVisualizer = () => {
     }
   };
 
+  // Reseta os valores aleatórios e gera novos valores
   const resetAndGenerateRandom = () => {
     setRandomValues(generateRandomValues(numVertices));
     setFeedback("Valores aleatórios gerados.");
@@ -106,6 +125,7 @@ const KnuthVisualizer = () => {
     runBenchmark();
   };
 
+  // Adiciona um valor à lista de valores aleatórios
   const addValue = () => {
     const value = parseInt(inputRef.current.value);
     if (isNaN(value)) {
@@ -123,6 +143,7 @@ const KnuthVisualizer = () => {
     runBenchmark();
   };
 
+  // Remove um valor da lista de valores aleatórios
   const removeValue = () => {
     const value = parseInt(inputRef.current.value);
     if (isNaN(value)) {
@@ -136,6 +157,7 @@ const KnuthVisualizer = () => {
     runBenchmark();
   };
 
+  // Manipula a mudança no número de vértices
   const handleNumVerticesChange = (e) => {
     const parsedValue = parseInt(e.target.value);
     if (!isNaN(parsedValue) && parsedValue <= 100) {
@@ -146,17 +168,31 @@ const KnuthVisualizer = () => {
     }
   };
 
+  // Descrições e complexidades dos algoritmos de árvore
   const algorithmDescriptions = {
-    bst: { description: "Árvore de Busca Binária (BST): ...", complexity: "O(log n) médio, O(n) pior caso" },
-    avl: { description: "Árvore AVL: ...", complexity: "O(log n)" },
-    "b-tree": { description: "Árvore B: ...", complexity: "O(log n)" },
-    "fib-tree": { description: "Árvore Fibonacci: ...", complexity: "O(n)" },
+    bst: {
+      description: "Árvore de Busca Binária (BST): Uma árvore binária onde para cada nó, todos os nós na subárvore esquerda são menores e todos os nós na subárvore direita são maiores. Eficiente para busca, inserção e remoção em média.",
+      complexity: "O(log n) médio, O(n) pior caso. O pior caso ocorre quando a árvore se degenera em uma lista ligada.",
+    },
+    avl: {
+      description: "Árvore AVL: Uma árvore de busca binária auto-balanceada que mantém a altura das subárvores esquerda e direita de cada nó dentro de um fator de 1. Isso garante que a altura da árvore seja sempre logarítmica.",
+      complexity: "O(log n). Devido ao balanceamento, as operações de busca, inserção e remoção sempre têm complexidade logarítmica.",
+    },
+    "b-tree": {
+      description: "Árvore B: Uma árvore auto-balanceada que permite múltiplos filhos por nó. É otimizada para sistemas que leem e escrevem grandes blocos de dados. Comumente usada em bancos de dados e sistemas de arquivos.",
+      complexity: "O(log n). As operações de busca, inserção e remoção são logarítmicas, pois a árvore mantém um balanceamento eficiente.",
+    },
+    "fib-tree": {
+      description: "Árvore Fibonacci: Uma árvore binária onde a altura de cada nó é determinada pela sequência de Fibonacci. Usada em algumas estruturas de dados avançadas e algoritmos de prioridade.",
+      complexity: "O(n). A altura da árvore pode crescer linearmente com o número de nós, resultando em complexidade linear para operações.",
+    },
   };
 
   const selectedDescription = algorithmDescriptions[selectedAlgorithm];
 
+  // Converte os dados da árvore para um formato de tabela
   const treeToTableData = (root, algorithmType, values) => {
-    const tableData = [{ type: algorithmType, values: values.join(', ') }];
+    const tableData = [{ type: algorithmType, values: values.join(", ") }];
     const traverse = (node, parentValue = null) => {
       if (!node) return;
       tableData.push({
@@ -172,6 +208,7 @@ const KnuthVisualizer = () => {
     return tableData;
   };
 
+  // Exporta os dados da árvore para um arquivo CSV
   const exportTreeToCSV = () => {
     if (treeData && treeData.tree) {
       const tableData = treeToTableData(treeData.tree, selectedAlgorithm.toUpperCase(), randomValues);
@@ -181,6 +218,7 @@ const KnuthVisualizer = () => {
     }
   };
 
+  // Função auxiliar para exportar dados para CSV
   const exportToCSV = (data, filename) => {
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -191,6 +229,7 @@ const KnuthVisualizer = () => {
     link.click();
   };
 
+  // Compartilha a simulação através de um link
   const shareSimulation = () => {
     const serializedData = btoa(JSON.stringify({ randomValues, selectedAlgorithm, numVertices }));
     const url = `${window.location.origin}?data=${serializedData}`;
@@ -199,6 +238,7 @@ const KnuthVisualizer = () => {
     setTimeout(() => setFeedback(null), 3000);
   };
 
+  // Efeito para lidar com parâmetros de URL ao carregar a página
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const serializedData = urlParams.get("data");
@@ -238,6 +278,7 @@ const KnuthVisualizer = () => {
         <h2>Árvore {selectedAlgorithm.toUpperCase()}</h2>
         <svg ref={svgRef} style={{ display: "block", margin: "20px auto", border: "1px solid white" }}></svg>
         <button onClick={exportTreeToCSV}>Exportar Árvore CSV</button>
+        <button onClick={shareSimulation}>Compartilhar Simulação</button>
 
         {selectedDescription && (
           <div style={{ marginTop: "20px", textAlign: "left" }}>
@@ -271,29 +312,22 @@ const KnuthVisualizer = () => {
                 <strong>{key}:</strong> {value}ms
               </p>
             ))}
-            <button onClick={() => exportToCSV(Object.entries(benchmarkResults).map(([key, value]) => ({ key, value })), "benchmark_results.csv")}>
-              Exportar CSV
-            </button>
           </div>
         )}
       </div>
 
       <div className="visualizer-container">
-        <h2>Tabela Hash</h2>
         <HashingVisualizer values={randomValues} />
       </div>
 
       <div className="visualizer-container">
-        <h2>Lista Encadeada</h2>
         <LinkedVisualizer values={randomValues} />
       </div>
 
       <div className="visualizer-container">
-        <h2>Skip List</h2>
         <SkipListVisualizer values={randomValues} />
       </div>
 
-      <button onClick={shareSimulation}>Compartilhar Simulação</button>
     </div>
   );
 };
